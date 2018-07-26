@@ -6,16 +6,22 @@ const iplocation = require('iplocation')
 const [domain] = argv._
 
 if (!domain) {
-  throw 'domain not exist! usage: traceroute-location www.google.com'
+  console.log('domain not exist! usage: traceroute-location www.google.com')
+  process.exit()
 }
-
-const tracer = new Traceroute()
-tracer
-  .on('hop', (hop) => {
-    iplocation(hop.ip).then((location) => {
+try {
+  const tracer = new Traceroute()
+  tracer
+    .on('hop', (hop) => {
       const hopArr = Object.keys(hop).map(x => hop[x])
-      const locationArr = [location.city, location.country]
-      console.log(hopArr.concat(locationArr).join("\t"))
+      iplocation(hop.ip).then((location) => {
+        const locationArr = [location.city, location.country]
+        console.log(hopArr.concat(locationArr).join("\t"))
+      }).catch(() => {
+        console.log(hopArr.join("\t"))
+      })
     })
-  })
-tracer.trace(domain)
+  tracer.trace(domain)
+} catch (e) {
+  console.log('error! make sure you got traceroute/tracert installed, if still not working please check error detail', e)
+}
